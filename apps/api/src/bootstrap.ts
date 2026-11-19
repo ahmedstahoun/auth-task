@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { REQUEST_ID_HEADER } from './common/logging/logger.config';
+import { bodyParserErrorHandler } from './common/middleware/body-parser-errors.middleware';
 import { AppConfig } from './config/app-config';
 
 /**
@@ -22,6 +23,7 @@ export function configureApp(app: NestExpressApplication): void {
   app.use(cookieParser());
   // JSON only, small bodies: the API never needs more than a few hundred bytes per request.
   app.useBodyParser('json', { limit: '10kb' });
+  app.use(bodyParserErrorHandler);
   app.enableCors({
     origin: config.get('CORS_ORIGINS'),
     credentials: true,

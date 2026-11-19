@@ -11,7 +11,6 @@ import type { Request, Response } from 'express';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { AppConfig } from '../../config/app-config';
 import { isDuplicateKeyError } from '../../database/mongo-errors';
-import { isExposedClientHttpError } from '../utils/http-errors';
 import { ZodValidationException } from '../exceptions/zod-validation.exception';
 import type { NormalizedError } from '../interfaces/normalized-error.interface';
 
@@ -39,17 +38,6 @@ export function normalizeException(exception: unknown): NormalizedError {
   }
   if (isDuplicateKeyError(exception)) {
     return { statusCode: HttpStatus.CONFLICT, message: 'Resource already exists' };
-  }
-  // body-parser & co. (413 too large, 400 malformed JSON, 415 …): keep their status, but use a
-  // fixed message instead of the parser's text (which can echo fragments of the raw body).
-  if (isExposedClientHttpError(exception)) {
-    return {
-      statusCode: exception.status,
-      message:
-        exception.type === 'entity.parse.failed'
-          ? 'Malformed JSON body'
-          : (STATUS_CODES[exception.status] ?? 'Bad Request'),
-    };
   }
   return { statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Internal server error' };
 }

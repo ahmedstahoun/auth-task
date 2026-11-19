@@ -12,7 +12,6 @@ const config: Config = {
     'src/**/*.ts',
     '!src/**/*.spec.ts',
     '!src/main.ts',
-    '!src/bootstrap.ts',
     '!src/**/*.module.ts',
     '!src/**/*.interface.ts',
     '!src/**/*.type.ts',
