@@ -89,6 +89,17 @@ describe('Security (e2e)', () => {
         .post('/auth/signup')
         .send({ ...validUser, name: 'x'.repeat(11_000) })
         .expect(413);
+      // (body shape asserted by the unit test of the exception filter)
+    });
+
+    it('answers malformed JSON with 400 and a fixed message', async () => {
+      const res = await t
+        .http()
+        .post('/auth/signin')
+        .set('Content-Type', 'application/json')
+        .send('{"email":"a@b.co",}')
+        .expect(400);
+      expect(apiErrorSchema.parse(res.body).message).toBe('Malformed JSON body');
     });
 
     it('ignores non-JSON bodies (JSON-only API)', async () => {

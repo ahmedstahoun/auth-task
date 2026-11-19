@@ -84,6 +84,36 @@ describe('AllExceptionsFilter', () => {
 });
 
 describe('normalizeException', () => {
+  it('keeps the status of middleware client errors (body-parser) with a fixed message', () => {
+    const tooLarge = Object.assign(new Error('request entity too large'), {
+      status: 413,
+      expose: true,
+      type: 'entity.too.large',
+    });
+    const malformed = Object.assign(
+      new SyntaxError('Unexpected token } in JSON at position 9: {"a":1,}'),
+      {
+        status: 400,
+        expose: true,
+        type: 'entity.parse.failed',
+      },
+    );
+    expect(normalizeException(tooLarge)).toEqual({ statusCode: 413, message: 'Payload Too Large' });
+    expect(normalizeException(malformed)).toEqual({
+      statusCode: 400,
+      message: 'Malformed JSON body',
+    });
+  });
+
+  it('does not trust non-exposed or 5xx middleware errors', () => {
+    expect(
+      normalizeException(Object.assign(new Error('x'), { status: 400, expose: false })).statusCode,
+    ).toBe(500);
+    expect(
+      normalizeException(Object.assign(new Error('x'), { status: 503, expose: true })).statusCode,
+    ).toBe(500);
+  });
+
   it('joins array messages from HttpException payloads', () => {
     expect(normalizeException(new BadRequestException({ message: ['a', 'b'] })).message).toBe(
       'a; b',

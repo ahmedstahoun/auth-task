@@ -50,9 +50,13 @@ describe('MongoUsersRepository (integration)', () => {
     await expect(repository.findById('665f1f77bcf86cd799439011')).resolves.toBeNull();
   });
 
-  it('neutralises operator injection in filters (sanitizeFilter)', async () => {
+  it('never lets an operator object match users (defence in depth behind zod)', async () => {
     await repository.create(input);
     const injected = { $ne: null } as unknown as string;
-    await expect(repository.findCredentialsByEmail(injected)).resolves.toBeNull();
+    // `email` is a String path, so Mongoose's casting rejects the operator object outright;
+    // sanitizeFilter covers paths without a schema type. Either way, nothing is matched.
+    await expect(repository.findCredentialsByEmail(injected)).rejects.toThrow(
+      /Cast to string failed/,
+    );
   });
 });
