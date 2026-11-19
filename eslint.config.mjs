@@ -44,6 +44,13 @@ export default tseslint.config(
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // Nest modules are intentionally empty classes carrying a @Module() decorator.
+      '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
+      // Type augmentation of Express' global namespace is the documented way to type req.user.
+      '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
+      // Mongoose and Nest type their option bags as classes but are designed to take object
+      // literals; this rule only produces false positives there. All no-unsafe-* rules stay on.
+      '@typescript-eslint/no-unsafe-class-instance-assignment': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
