@@ -1,5 +1,7 @@
 // @ts-check
 import js from '@eslint/js';
+import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -56,6 +58,24 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
     },
+  },
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    plugins: { 'react-hooks': reactHooks },
+    languageOptions: { globals: globals.browser },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      // Event handlers commonly wrap async work in `void promise`.
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
+    },
+  },
+  {
+    files: ['apps/api/**/*.ts'],
+    languageOptions: { globals: globals.node },
+    rules: { 'no-console': 'error' },
   },
   {
     files: ['**/*.mjs', '**/*.js'],
