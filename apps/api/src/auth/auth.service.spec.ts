@@ -13,14 +13,24 @@ import {
   buildSignUpInput,
   buildUserDto,
 } from '../../test/utils/factories';
-import { mockSessionStore } from '../../test/utils/mocks';
+import { mockLoginAttemptsRepository, mockSessionsRepository } from '../../test/utils/mocks';
 import { createTestingModule } from '../../test/utils/testing-module';
 import { AuditLogger } from '../common/logging/audit-logger.service';
-import { SessionStore } from '../sessions/session-store';
-import { TokenService, type RefreshClaims, type SignedToken } from '../tokens/token.service';
+import {
+  LOGIN_ATTEMPTS_REPOSITORY,
+  type LoginAttemptsRepository,
+} from '../repositories/interfaces/login-attempts-repository.interface';
+import {
+  SESSIONS_REPOSITORY,
+  type SessionsRepository,
+} from '../repositories/interfaces/sessions-repository.interface';
+import type { SignedToken } from '../tokens/interfaces/signed-token.interface';
+import type { RefreshClaims } from '../tokens/interfaces/token-claims.interface';
+import { TokenService } from '../tokens/token.service';
 import { UsersService } from '../users/users.service';
-import { AuthService, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from './auth.service';
-import { PasswordService } from './password.service';
+import { AuthService } from './auth.service';
+import { INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from './constants/auth.constants';
+import { PasswordService } from './services/password.service';
 
 const signed = (token: string, jti = `${token}-jti`): SignedToken => ({
   token,
@@ -33,7 +43,8 @@ describe('AuthService', () => {
   let users: DeepMocked<UsersService>;
   let passwords: DeepMocked<PasswordService>;
   let tokens: DeepMocked<TokenService>;
-  let sessions: DeepMocked<SessionStore>;
+  let sessions: DeepMocked<SessionsRepository>;
+  let loginAttempts: DeepMocked<LoginAttemptsRepository>;
   let audit: DeepMocked<AuditLogger>;
   const client = buildClient();
   const user = buildUserDto();
@@ -42,12 +53,13 @@ describe('AuthService', () => {
     users = createMock<UsersService>();
     passwords = createMock<PasswordService>();
     tokens = createMock<TokenService>({ accessTtlSeconds: 900 });
-    sessions = mockSessionStore();
+    sessions = mockSessionsRepository();
+    loginAttempts = mockLoginAttemptsRepository();
 
     tokens.signAccess.mockResolvedValue(signed('access'));
     tokens.signRefresh.mockResolvedValue(signed('refresh'));
     sessions.create.mockResolvedValue(buildSession({ userId: user.id }));
-    sessions.countFailedLogins.mockResolvedValue(0);
+    loginAttempts.countFailures.mockResolvedValue(0);
 
     const moduleRef = await createTestingModule({
       providers: [AuthService],
@@ -55,7 +67,8 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: users },
         { provide: PasswordService, useValue: passwords },
         { provide: TokenService, useValue: tokens },
-        { provide: SessionStore, useValue: sessions },
+        { provide: SESSIONS_REPOSITORY, useValue: sessions },
+        { provide: LOGIN_ATTEMPTS_REPOSITORY, useValue: loginAttempts },
       ],
       env: { LOCKOUT_MAX_ATTEMPTS: 3 },
     });
@@ -115,7 +128,7 @@ describe('AuthService', () => {
       const result = await service.signIn(buildSignInInput(), client);
 
       expect(result.body.user).toEqual(user);
-      expect(sessions.clearFailedLogins).toHaveBeenCalledWith('jane@example.com');
+      expect(loginAttempts.clear).toHaveBeenCalledWith('jane@example.com');
       expect(audit.record).toHaveBeenCalledWith(
         { event: 'signin_success', userId: user.id, sessionId: result.sessionId },
         client,
@@ -125,7 +138,7 @@ describe('AuthService', () => {
     it('returns 401 with a generic message when the password is wrong', async () => {
       users.findCredentialsByEmail.mockResolvedValue({ id: user.id, passwordHash: 'hash' });
       passwords.verify.mockResolvedValue(false);
-      sessions.registerFailedLogin.mockResolvedValue(1);
+      loginAttempts.registerFailure.mockResolvedValue(1);
 
       await expect(service.signIn(buildSignInInput(), client)).rejects.toThrow(
         new UnauthorizedException(INVALID_CREDENTIALS),
@@ -139,7 +152,7 @@ describe('AuthService', () => {
     it('returns the identical 401 for an unknown email and still burns a hash verification', async () => {
       users.findCredentialsByEmail.mockResolvedValue(null);
       passwords.verifyDummy.mockResolvedValue(false);
-      sessions.registerFailedLogin.mockResolvedValue(1);
+      loginAttempts.registerFailure.mockResolvedValue(1);
 
       await expect(service.signIn(buildSignInInput(), client)).rejects.toThrow(
         new UnauthorizedException(INVALID_CREDENTIALS),
@@ -150,7 +163,7 @@ describe('AuthService', () => {
 
     it('records a lockout exactly when the threshold is reached', async () => {
       users.findCredentialsByEmail.mockResolvedValue(null);
-      sessions.registerFailedLogin.mockResolvedValue(3);
+      loginAttempts.registerFailure.mockResolvedValue(3);
 
       await expect(service.signIn(buildSignInInput(), client)).rejects.toBeInstanceOf(
         UnauthorizedException,
@@ -162,7 +175,7 @@ describe('AuthService', () => {
     });
 
     it('rejects with 429 while locked out, without checking the password', async () => {
-      sessions.countFailedLogins.mockResolvedValue(3);
+      loginAttempts.countFailures.mockResolvedValue(3);
 
       const error: unknown = await service
         .signIn(buildSignInInput(), client)

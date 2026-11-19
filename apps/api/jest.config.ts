@@ -14,17 +14,19 @@ const config: Config = {
     '!src/main.ts',
     '!src/bootstrap.ts',
     '!src/**/*.module.ts',
-    '!src/**/*.schema.ts',
-    '!src/**/*.schemas.ts',
-    // Thin Mongo adapters: exercised against a real MongoDB in test/integration.
-    '!src/sessions/mongo-session.store.ts',
-    '!src/users/users.service.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.type.ts',
+    '!src/**/*.model.ts',
+    '!src/repositories/schemas/**',
+    // Mongo adapters: exercised against a real MongoDB in test/integration.
+    '!src/repositories/mongo/**',
     '!src/health/**',
   ],
   coverageThreshold: {
     global: { lines: 80, branches: 80, functions: 80, statements: 80 },
     './src/auth/': { lines: 90, branches: 90, functions: 90, statements: 90 },
     './src/tokens/': { lines: 90, branches: 90, functions: 90, statements: 90 },
+    './src/users/': { lines: 90, branches: 90, functions: 90, statements: 90 },
   },
   // v8 maps through source maps, so SWC's decorator/metadata helpers don't count as branches.
   coverageProvider: 'v8',

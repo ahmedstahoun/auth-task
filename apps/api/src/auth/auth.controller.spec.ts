@@ -9,7 +9,8 @@ import {
 } from '../../test/utils/factories';
 import { mockConfig } from '../../test/utils/mocks';
 import { AuthController } from './auth.controller';
-import type { AuthResult, AuthService } from './auth.service';
+import type { AuthService } from './auth.service';
+import type { AuthResult } from './interfaces/auth-result.interface';
 
 describe('AuthController', () => {
   let auth: DeepMocked<AuthService>;

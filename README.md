@@ -8,7 +8,7 @@ in a pnpm monorepo, with one shared validation package so client and server rule
 | **API**     | NestJS 11, Mongoose 9, JWT (access + rotating refresh), argon2id, nestjs-pino, Swagger                  |
 | **Web**     | React 19, Vite, shadcn/ui + Tailwind v4, TanStack Query, react-hook-form                                |
 | **Shared**  | zod schemas + API contract types (`@auth/shared`)                                                       |
-| **Quality** | strict TS (no `any`), type-aware ESLint, 120 API unit tests, integration + e2e suites, 36 web tests, CI |
+| **Quality** | strict TS (no `any`), type-aware ESLint, 126 API unit tests, integration + e2e suites, 36 web tests, CI |
 
 ---
 
@@ -77,23 +77,41 @@ flowchart LR
 ```
 
 ```
-apps/
-  api/src
-    auth/        controller, service, guard, password hashing, cookie + rate-limit helpers
-    tokens/      JWT issuing / verification (separate secrets, pinned alg/iss/aud, zod-parsed claims)
-    sessions/    SessionStore port + MongoDB TTL implementation
-    users/       schema, service, GET /users/me
-    common/      logging (pino + audit), exception filter, zod pipe, OpenAPI bridge, Mongo hardening
-    config/      zod env schema + typed AppConfig
-    health/      /health (terminus + Mongo ping)
-  api/test       utils (factories, typed mocks, testing-module builder), integration, e2e
-  web/src
-    lib/api      axios client (refresh mutex), token store, typed endpoints, error mapping
-    features/auth  AuthProvider, route guards, form components
-    pages/       sign-in, sign-up, app (welcome), 404
-packages/shared  zod schemas, password rules, API contract types
-docs/adr         architecture decision records
+apps/api/src
+├── main.ts · bootstrap.ts · app.module.ts
+├── config/            zod env schema + typed, injectable AppConfig
+├── database/          DatabaseModule (connection), Mongo hardening, Mongo error helpers
+├── repositories/      RepositoriesModule — the persistence boundary
+│   ├── interfaces/    UsersRepository, SessionsRepository, LoginAttemptsRepository + injection tokens
+│   ├── models/        domain models returned by repositories (User, Session, RotationResult, …)
+│   ├── schemas/       Mongoose schemas (user, session, login-attempt)
+│   ├── mongo/         Mongo implementations of the interfaces
+│   └── errors/        persistence-agnostic errors (DuplicateEmailError)
+├── auth/              AuthModule
+│   ├── auth.controller.ts · auth.service.ts · auth.module.ts
+│   ├── services/      PasswordService (argon2id)
+│   ├── guards/        JwtAuthGuard
+│   ├── decorators/    @CurrentUser, @AuthRateLimited
+│   ├── interfaces/    AuthUser, AuthResult
+│   ├── constants/     messages, metadata keys
+│   ├── config/        throttler configuration
+│   └── utils/         refresh cookie, bearer token parsing
+├── tokens/            TokensModule — JWT sign/verify; schemas/ (zod claims), interfaces/
+├── users/             UsersModule — GET /users/me, UsersService, mappers/ (User → UserDto)
+├── health/            /health (terminus + Mongo ping)
+└── common/            cross-cutting
+    ├── filters/ guards/ decorators/ pipes/ exceptions/ openapi/ utils/
+    ├── interfaces/    ClientContext, ValidationDetails, NormalizedError, OpenApiSchema
+    └── logging/       LoggingModule, pino config, AuditLogger, interfaces/
+
+apps/api/test          utils/ (factories, typed mocks, testing-module builder), integration/, e2e/
+apps/web/src           lib/api (client, token store, endpoints), features/auth, pages, components/ui
+packages/shared        zod schemas, password rules, API contract types
+docs/adr               architecture decision records
 ```
+
+**Layering:** controllers → services → repository **interfaces** (injected by token) → Mongo implementations.
+Services never import Mongoose; only `repositories/mongo` and `database/` do.
 
 ## API
 

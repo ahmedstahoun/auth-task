@@ -1,17 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { SessionsModule } from '../sessions/sessions.module';
+import { RepositoriesModule } from '../repositories/repositories.module';
 import { TokensModule } from '../tokens/tokens.module';
-import { USER_MODEL, userSchema } from './user.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: USER_MODEL, schema: userSchema }]),
-    TokensModule,
-    SessionsModule,
-  ],
+  // TokensModule + RepositoriesModule provide what JwtAuthGuard needs on GET /users/me.
+  imports: [RepositoriesModule, TokensModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

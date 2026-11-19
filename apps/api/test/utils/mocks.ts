@@ -4,7 +4,9 @@ import type { PinoLogger } from 'nestjs-pino';
 import type { AuditLogger } from '../../src/common/logging/audit-logger.service';
 import { AppConfig } from '../../src/config/app-config';
 import type { Env } from '../../src/config/env.schema';
-import type { SessionStore } from '../../src/sessions/session-store';
+import type { LoginAttemptsRepository } from '../../src/repositories/interfaces/login-attempts-repository.interface';
+import type { SessionsRepository } from '../../src/repositories/interfaces/sessions-repository.interface';
+import type { UsersRepository } from '../../src/repositories/interfaces/users-repository.interface';
 import { buildEnv } from './factories';
 
 /** A real AppConfig backed by a plain Env object — no process.env involved. */
@@ -20,6 +22,14 @@ export function mockAuditLogger(): DeepMocked<AuditLogger> {
   return createMock<AuditLogger>();
 }
 
-export function mockSessionStore(): DeepMocked<SessionStore> {
-  return createMock<SessionStore>();
+export function mockUsersRepository(): DeepMocked<UsersRepository> {
+  return createMock<UsersRepository>();
+}
+
+export function mockSessionsRepository(): DeepMocked<SessionsRepository> {
+  return createMock<SessionsRepository>();
+}
+
+export function mockLoginAttemptsRepository(): DeepMocked<LoginAttemptsRepository> {
+  return createMock<LoginAttemptsRepository>();
 }

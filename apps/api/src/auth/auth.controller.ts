@@ -31,17 +31,19 @@ import {
 } from '@auth/shared';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { OriginGuard } from '../common/http/origin.guard';
-import { Client, type ClientContext } from '../common/http/request-context';
-import { zodToOpenApi } from '../common/validation/openapi';
-import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
+import { OriginGuard } from '../common/guards/origin.guard';
+import { Client } from '../common/decorators/client.decorator';
+import type { ClientContext } from '../common/interfaces/client-context.interface';
+import { zodToOpenApi } from '../common/openapi/zod-to-openapi';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AppConfig } from '../config/app-config';
-import type { AuthUser } from './auth-user';
-import { AuthService, type AuthResult } from './auth.service';
-import { CurrentUser } from './current-user.decorator';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { AuthRateLimited } from './rate-limit';
-import { clearRefreshCookie, readRefreshCookie, setRefreshCookie } from './refresh-cookie';
+import type { AuthUser } from './interfaces/auth-user.interface';
+import { AuthService } from './auth.service';
+import type { AuthResult } from './interfaces/auth-result.interface';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthRateLimited } from './decorators/auth-rate-limited.decorator';
+import { clearRefreshCookie, readRefreshCookie, setRefreshCookie } from './utils/refresh-cookie';
 
 @ApiTags('auth')
 @Controller('auth')

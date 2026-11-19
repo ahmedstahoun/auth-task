@@ -1,46 +1,35 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import type { UserDto } from '@auth/shared';
-import { isValidObjectId, Model } from 'mongoose';
-import { isDuplicateKeyError } from '../common/mongo/mongo-errors';
-import { toUserDto } from './user.mapper';
-import { USER_MODEL, type User } from './user.schema';
+import { DuplicateEmailError } from '../repositories/errors/duplicate-email.error';
+import {
+  USERS_REPOSITORY,
+  type UsersRepository,
+} from '../repositories/interfaces/users-repository.interface';
+import type { NewUser, UserCredentials } from '../repositories/models/user.model';
+import { toUserDto } from './mappers/user.mapper';
 
-export interface NewUser {
-  email: string;
-  name: string;
-  passwordHash: string;
-}
+export const EMAIL_TAKEN = 'An account with this email already exists';
 
-export interface UserCredentials {
-  id: string;
-  passwordHash: string;
-}
-
+/** User use-cases. Talks to persistence only through the UsersRepository interface. */
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(USER_MODEL) private readonly users: Model<User>) {}
+  constructor(@Inject(USERS_REPOSITORY) private readonly users: UsersRepository) {}
 
   async create(input: NewUser): Promise<UserDto> {
     try {
-      const created = await this.users.create(input);
-      return toUserDto(created);
+      return toUserDto(await this.users.create(input));
     } catch (error: unknown) {
-      if (isDuplicateKeyError(error)) {
-        throw new ConflictException('An account with this email already exists');
-      }
+      if (error instanceof DuplicateEmailError) throw new ConflictException(EMAIL_TAKEN);
       throw error;
     }
   }
 
-  async findCredentialsByEmail(email: string): Promise<UserCredentials | null> {
-    const user = await this.users.findOne({ email }).select('+passwordHash').lean().exec();
-    return user ? { id: user._id.toHexString(), passwordHash: user.passwordHash } : null;
+  async findById(id: string): Promise<UserDto | null> {
+    const user = await this.users.findById(id);
+    return user ? toUserDto(user) : null;
   }
 
-  async findById(id: string): Promise<UserDto | null> {
-    if (!isValidObjectId(id)) return null;
-    const user = await this.users.findById(id).lean().exec();
-    return user ? toUserDto(user) : null;
+  findCredentialsByEmail(email: string): Promise<UserCredentials | null> {
+    return this.users.findCredentialsByEmail(email);
   }
 }

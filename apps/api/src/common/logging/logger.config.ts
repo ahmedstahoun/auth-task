@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Params } from 'nestjs-pino';
 import type { Env, LogLevel } from '../../config/env.schema';
+import type { SerializedRequest, SerializedResponse } from './interfaces/serialized-http.interface';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const REQUEST_ID_HEADER = 'x-request-id';
@@ -37,18 +38,6 @@ export function resolveRequestId(header: string | string[] | undefined): string 
   return typeof header === 'string' && UUID_PATTERN.test(header) ? header : randomUUID();
 }
 
-interface SerializedReq {
-  id: unknown;
-  method: unknown;
-  url: unknown;
-  remoteAddress: unknown;
-  headers: Record<string, unknown>;
-}
-
-interface SerializedRes {
-  statusCode: unknown;
-}
-
 export function buildLoggerParams(env: Pick<Env, 'NODE_ENV' | 'LOG_LEVEL'>): Params {
   return {
     // Adds context assigned during the request (e.g. userId) to the "request completed" line.
@@ -73,14 +62,14 @@ export function buildLoggerParams(env: Pick<Env, 'NODE_ENV' | 'LOG_LEVEL'>): Par
         return id;
       },
       serializers: {
-        req: (req: SerializedReq) => ({
+        req: (req: SerializedRequest) => ({
           id: req.id,
           method: req.method,
           url: req.url,
           remoteAddress: req.remoteAddress,
           userAgent: req.headers['user-agent'],
         }),
-        res: (res: SerializedRes) => ({ statusCode: res.statusCode }),
+        res: (res: SerializedResponse) => ({ statusCode: res.statusCode }),
       },
       redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
       customLogLevel: (_req, res, err) => {

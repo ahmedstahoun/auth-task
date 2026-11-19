@@ -1,29 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { AppConfig } from '../config/app-config';
+import type { SignedToken } from './interfaces/signed-token.interface';
+import type { AccessClaims, RefreshClaims } from './interfaces/token-claims.interface';
+import { accessClaimsSchema, refreshClaimsSchema } from './schemas/token-claims.schema';
 
 const ALGORITHM = 'HS256';
-
-const baseClaims = z.object({
-  sub: z.string().min(1),
-  sid: z.uuid(),
-  jti: z.uuid(),
-  iat: z.number().int(),
-  exp: z.number().int(),
-});
-const accessClaimsSchema = baseClaims.extend({ typ: z.literal('access') });
-const refreshClaimsSchema = baseClaims.extend({ typ: z.literal('refresh') });
-
-export type AccessClaims = z.infer<typeof accessClaimsSchema>;
-export type RefreshClaims = z.infer<typeof refreshClaimsSchema>;
-
-export interface SignedToken {
-  token: string;
-  jti: string;
-  expiresAt: Date;
-}
 
 /**
  * Issues and verifies JWTs. Access and refresh tokens use separate secrets and a `typ` claim, so

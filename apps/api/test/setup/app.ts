@@ -7,7 +7,6 @@ import request from 'supertest';
 import type TestAgent from 'supertest/lib/agent';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
-import { applyMongooseHardening } from '../../src/common/mongo/mongo.config';
 import { AppConfig } from '../../src/config/app-config';
 import { validateEnv, type Env } from '../../src/config/env.schema';
 
@@ -30,7 +29,6 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<T
     new ConfigService<Env, true>(validateEnv({ ...process.env, ...env })),
   );
 
-  applyMongooseHardening();
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(AppConfig)
     .useValue(config)

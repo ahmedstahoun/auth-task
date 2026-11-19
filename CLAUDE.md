@@ -60,7 +60,8 @@ Speed is scored. Do not gold-plate. Anything beyond this file goes in README "Ne
 > support 7 yet), no `nestjs-zod` (no Nest 11+ peer support → small local pipe + OpenAPI bridge), no Passport
 > (a 30-line typed guard), no `revoked_tokens` denylist (the per-request session check already makes revocation
 > immediate), refresh tokens use the session's absolute expiry (no sliding), jti comparison happens in the DB
-> query on a SHA-256 hash (no separate timing-safe compare needed).
+> query on a SHA-256 hash (no separate timing-safe compare needed). Later restructured into a repository layer
+> (`RepositoriesModule`, interfaces + tokens, domain models, schemas, Mongo implementations) — see ADR 0006.
 
 | Area | Decision | Why (short) |
 |---|---|---|

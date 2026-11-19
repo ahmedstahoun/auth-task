@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { SignInInput, SignUpInput, UserDto } from '@auth/shared';
 import { Types } from 'mongoose';
-import type { ClientContext } from '../../src/common/http/request-context';
+import type { ClientContext } from '../../src/common/interfaces/client-context.interface';
 import type { Env } from '../../src/config/env.schema';
-import type { SessionRecord } from '../../src/sessions/session-store';
+import type { Session } from '../../src/repositories/models/session.model';
+import type { User } from '../../src/repositories/models/user.model';
 
 /** A complete, valid Env for tests. Secrets are test-only values. */
 export function buildEnv(overrides: Partial<Env> = {}): Env {
@@ -37,6 +38,16 @@ export function buildUserDto(overrides: Partial<UserDto> = {}): UserDto {
   };
 }
 
+export function buildUser(overrides: Partial<User> = {}): User {
+  return {
+    id: new Types.ObjectId().toHexString(),
+    email: 'jane@example.com',
+    name: 'Jane Doe',
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
 export function buildSignUpInput(overrides: Partial<SignUpInput> = {}): SignUpInput {
   return { email: 'jane@example.com', name: 'Jane Doe', password: 'Str0ng!pass', ...overrides };
 }
@@ -45,7 +56,7 @@ export function buildSignInInput(overrides: Partial<SignInInput> = {}): SignInIn
   return { email: 'jane@example.com', password: 'Str0ng!pass', ...overrides };
 }
 
-export function buildSession(overrides: Partial<SessionRecord> = {}): SessionRecord {
+export function buildSession(overrides: Partial<Session> = {}): Session {
   const now = new Date();
   return {
     id: randomUUID(),

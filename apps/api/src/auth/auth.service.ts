@@ -1,24 +1,33 @@
 import { randomUUID } from 'node:crypto';
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { AuthResponse, SessionDto, SignInInput, SignUpInput, UserDto } from '@auth/shared';
-import type { ClientContext } from '../common/http/request-context';
+import type { ClientContext } from '../common/interfaces/client-context.interface';
 import { AuditLogger } from '../common/logging/audit-logger.service';
 import { AppConfig } from '../config/app-config';
-import { SessionStore } from '../sessions/session-store';
-import { TokenService, type SignedToken } from '../tokens/token.service';
+import {
+  LOGIN_ATTEMPTS_REPOSITORY,
+  type LoginAttemptsRepository,
+} from '../repositories/interfaces/login-attempts-repository.interface';
+import {
+  SESSIONS_REPOSITORY,
+  type SessionsRepository,
+} from '../repositories/interfaces/sessions-repository.interface';
+import { TokenService } from '../tokens/token.service';
 import { UsersService } from '../users/users.service';
-import type { AuthUser } from './auth-user';
-import { PasswordService } from './password.service';
-
-export interface AuthResult {
-  body: AuthResponse;
-  refresh: SignedToken;
-  sessionId: string;
-}
-
-export const INVALID_CREDENTIALS = 'Invalid credentials';
-export const TOO_MANY_ATTEMPTS = 'Too many failed sign-in attempts. Please try again later.';
-const SESSION_INVALID = 'Session is no longer valid';
+import {
+  INVALID_CREDENTIALS,
+  SESSION_INVALID,
+  TOO_MANY_ATTEMPTS,
+} from './constants/auth.constants';
+import type { AuthResult } from './interfaces/auth-result.interface';
+import type { AuthUser } from './interfaces/auth-user.interface';
+import { PasswordService } from './services/password.service';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +35,8 @@ export class AuthService {
     private readonly users: UsersService,
     private readonly passwords: PasswordService,
     private readonly tokens: TokenService,
-    private readonly sessions: SessionStore,
+    @Inject(SESSIONS_REPOSITORY) private readonly sessions: SessionsRepository,
+    @Inject(LOGIN_ATTEMPTS_REPOSITORY) private readonly loginAttempts: LoginAttemptsRepository,
     private readonly audit: AuditLogger,
     private readonly config: AppConfig,
   ) {}
@@ -40,7 +50,7 @@ export class AuthService {
 
   async signIn(input: SignInInput, client: ClientContext): Promise<AuthResult> {
     const maxAttempts = this.config.get('LOCKOUT_MAX_ATTEMPTS');
-    if ((await this.sessions.countFailedLogins(input.email)) >= maxAttempts) {
+    if ((await this.loginAttempts.countFailures(input.email)) >= maxAttempts) {
       throw new HttpException(TOO_MANY_ATTEMPTS, HttpStatus.TOO_MANY_REQUESTS);
     }
 
@@ -61,7 +71,7 @@ export class AuthService {
     const user = await this.users.findById(credentials.id);
     if (!user) throw new UnauthorizedException(INVALID_CREDENTIALS);
 
-    await this.sessions.clearFailedLogins(input.email);
+    await this.loginAttempts.clear(input.email);
     const result = await this.startSession(user, client);
     this.audit.record(
       { event: 'signin_success', userId: user.id, sessionId: result.sessionId },
@@ -142,7 +152,7 @@ export class AuthService {
     reason: 'unknown_email' | 'wrong_password',
     client: ClientContext,
   ): Promise<void> {
-    const failures = await this.sessions.registerFailedLogin(
+    const failures = await this.loginAttempts.registerFailure(
       email,
       this.config.get('LOCKOUT_WINDOW_SECONDS'),
     );

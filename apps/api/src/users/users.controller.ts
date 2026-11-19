@@ -1,10 +1,10 @@
 import { Controller, Get, NotFoundException, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { userDtoSchema, type UserDto } from '@auth/shared';
-import type { AuthUser } from '../auth/auth-user';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { zodToOpenApi } from '../common/validation/openapi';
+import type { AuthUser } from '../auth/interfaces/auth-user.interface';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { zodToOpenApi } from '../common/openapi/zod-to-openapi';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
