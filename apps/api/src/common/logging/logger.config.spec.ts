@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import pino from 'pino';
 import {
   buildLoggerParams,
   REDACT_PATHS,
@@ -24,15 +25,26 @@ describe('logger config', () => {
     expect(resolveRequestId([id, id])).not.toBe(id);
   });
 
-  it('redacts credentials and tokens', () => {
-    expect(REDACT_PATHS).toEqual(
-      expect.arrayContaining([
-        'req.headers.authorization',
-        'req.headers.cookie',
-        '*.password',
-        '*.refreshToken',
-      ]),
+  it('redacts credentials and tokens in real log output (top-level and nested)', () => {
+    const lines: string[] = [];
+    const logger = pino(
+      { redact: { paths: REDACT_PATHS, censor: '[REDACTED]' } },
+      { write: (line: string) => lines.push(line) },
     );
+    logger.info(
+      { password: 'p1', accessToken: 't1', body: { password: 'p2', refreshToken: 't2' } },
+      'x',
+    );
+    logger.info(
+      { req: { headers: { authorization: 'Bearer t3', cookie: 'refresh_token=t4' } } },
+      'y',
+    );
+
+    const output = lines.join('');
+    for (const secret of ['p1', 'p2', 't1', 't2', 'Bearer t3', 'refresh_token=t4']) {
+      expect(output).not.toContain(secret);
+    }
+    expect(output.match(/\[REDACTED\]/g)).toHaveLength(6);
   });
 
   describe('pino-http options', () => {

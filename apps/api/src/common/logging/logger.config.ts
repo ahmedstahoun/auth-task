@@ -6,16 +6,18 @@ import type { Env, LogLevel } from '../../config/env.schema';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const REQUEST_ID_HEADER = 'x-request-id';
 
-/** Paths censored in every log line, including objects passed to logger calls. */
+const SENSITIVE_KEYS = ['password', 'passwordHash', 'accessToken', 'refreshToken', 'token'];
+
+/**
+ * Paths censored in every log line, including objects passed to logger calls.
+ * pino's `*.key` only matches one level down, so top-level keys are listed explicitly too.
+ */
 export const REDACT_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
   'res.headers["set-cookie"]',
-  '*.password',
-  '*.passwordHash',
-  '*.accessToken',
-  '*.refreshToken',
-  '*.token',
+  ...SENSITIVE_KEYS,
+  ...SENSITIVE_KEYS.map((key) => `*.${key}`),
 ];
 
 export function resolveLogLevel(env: Pick<Env, 'NODE_ENV' | 'LOG_LEVEL'>): LogLevel {

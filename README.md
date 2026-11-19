@@ -184,6 +184,8 @@ Full threat model in [SECURITY.md](SECURITY.md). Highlights:
 - **Throttler storage is in-memory** (per instance). The per-email lockout is persisted in MongoDB, so it survives restarts; a shared throttler store is listed below.
 - **Sign-up reveals whether an email exists (409)** — the usual UX trade-off; mitigated by rate limiting. The fix is email verification (below).
 - **Per-email lockout can be abused to lock someone out** — bounded window (15 min); see SECURITY.md.
+- **Deploy web and API on the same site** (e.g. `app.example.com` + `api.example.com`): the refresh cookie is
+  `SameSite=Strict`, which browsers don't send cross-site. Different sites would need `SameSite=None` plus a CSRF token.
 
 ## Next steps (with more time)
 

@@ -50,6 +50,19 @@ describe('signUpSchema', () => {
     );
   });
 
+  it.each(['Jane\nDoe', 'Jane\u0000', 'Jane\u202Eeod'])(
+    'rejects control characters in the name (%j)',
+    (name) => {
+      expect(issuesFor({ ...valid, name })).toContain('Name contains invalid characters');
+    },
+  );
+
+  it('accepts international names', () => {
+    expect(signUpSchema.safeParse({ ...valid, name: 'أحمد طاهون' }).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...valid, name: "José O'Neil-Smith" }).success).toBe(true);
+    expect(signUpSchema.safeParse({ ...valid, name: 'می\u200Cخواهم' }).success).toBe(true); // ZWNJ
+  });
+
   it('rejects unknown keys (blocks mass assignment)', () => {
     expect(signUpSchema.safeParse({ ...valid, role: 'admin' }).success).toBe(false);
   });

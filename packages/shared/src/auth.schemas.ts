@@ -40,7 +40,10 @@ export const nameSchema = z
   .string({ error: 'Name is required' })
   .trim()
   .min(NAME_MIN_LENGTH, { error: `Name must be at least ${String(NAME_MIN_LENGTH)} characters` })
-  .max(NAME_MAX_LENGTH, { error: `Name must be at most ${String(NAME_MAX_LENGTH)} characters` });
+  .max(NAME_MAX_LENGTH, { error: `Name must be at most ${String(NAME_MAX_LENGTH)} characters` })
+  // Control characters (newlines, NUL…) and bidi overrides enable log forging and UI spoofing.
+  // Zero-width joiners stay allowed: they are legitimate in e.g. Persian and Indic names.
+  .regex(/^[^\p{Cc}\u202A-\u202E\u2066-\u2069]*$/u, { error: 'Name contains invalid characters' });
 
 export const passwordSchema = z
   .string({ error: 'Password is required' })
