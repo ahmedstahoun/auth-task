@@ -10,6 +10,16 @@ in a pnpm monorepo, with one shared validation package so client and server rule
 | **Shared**  | zod schemas + API contract types (`@auth/shared`)                                                       |
 | **Quality** | strict TS (no `any`), type-aware ESLint, 126 API unit tests, integration + e2e suites, 36 web tests, CI |
 
+## Screenshots
+
+| Sign up — live validation                                                                                                               | Sign in — generic error                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| <img src="docs/screenshots/sign-up-validation.png" alt="Sign-up form showing field errors and the live password checklist" width="380"> | <img src="docs/screenshots/sign-in-error.png" alt="Sign-in form showing an Invalid credentials error" width="380"> |
+
+| Welcome page (protected)                                                                                        | Dark mode                                                                                 |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| <img src="docs/screenshots/welcome.png" alt="Welcome to the application page with log out buttons" width="380"> | <img src="docs/screenshots/welcome-dark.png" alt="Welcome page in dark mode" width="380"> |
+
 ---
 
 ## Quick start
