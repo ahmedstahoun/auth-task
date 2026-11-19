@@ -2,6 +2,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { Connection } from 'mongoose';
 import { getConnectionToken } from '@nestjs/mongoose';
+import { BASE_MONGO_OPTIONS } from '../../src/database/mongo-client.options';
 import { applyMongooseHardening } from '../../src/database/mongo-hardening';
 import { RepositoriesModule } from '../../src/repositories/repositories.module';
 
@@ -16,7 +17,10 @@ export interface RepositoriesTestContext {
 export async function createRepositoriesContext(): Promise<RepositoriesTestContext> {
   applyMongooseHardening();
   const moduleRef = await Test.createTestingModule({
-    imports: [MongooseModule.forRoot(process.env['MONGO_URI'] ?? ''), RepositoriesModule],
+    imports: [
+      MongooseModule.forRoot(process.env['MONGO_URI'] ?? '', BASE_MONGO_OPTIONS),
+      RepositoriesModule,
+    ],
   }).compile();
   const connection = moduleRef.get<Connection>(getConnectionToken());
   await Promise.all(Object.values(connection.models).map((model) => model.init()));
