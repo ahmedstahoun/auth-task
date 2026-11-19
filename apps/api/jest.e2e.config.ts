@@ -10,6 +10,8 @@ const config: Config = {
   globalSetup: '<rootDir>/test/setup/global-setup.ts',
   globalTeardown: '<rootDir>/test/setup/global-teardown.ts',
   testTimeout: 30_000,
+  // Report (instead of silently waiting on) anything that keeps the process alive after the run.
+  detectOpenHandles: true,
 };
 
 export default config;
