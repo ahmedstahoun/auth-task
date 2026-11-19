@@ -5,7 +5,8 @@ import { validateEnv } from './env.schema';
 
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot({ cache: true, validate: validateEnv })],
+  // Env comes from the process (node --env-file in dev, the platform in prod) — one mechanism only.
+  imports: [ConfigModule.forRoot({ cache: true, ignoreEnvFile: true, validate: validateEnv })],
   providers: [AppConfig],
   exports: [AppConfig],
 })

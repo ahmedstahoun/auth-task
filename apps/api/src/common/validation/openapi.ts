@@ -2,8 +2,9 @@ import type { ApiBody } from '@nestjs/swagger';
 import { z } from 'zod';
 
 /** Swagger's SchemaObject, derived from the public ApiBody signature (deep imports are blocked). */
-export type OpenApiSchema = NonNullable<
-  Extract<Parameters<typeof ApiBody>[0], { schema?: unknown }>['schema']
+export type OpenApiSchema = Exclude<
+  NonNullable<Extract<Parameters<typeof ApiBody>[0], { schema?: unknown }>['schema']>,
+  { $ref: string }
 >;
 
 type JsonSchema = z.core.JSONSchema.BaseSchema;
