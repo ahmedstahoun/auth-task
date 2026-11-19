@@ -8,7 +8,8 @@ import { AppConfig } from './config/app-config';
 async function bootstrap(): Promise<void> {
   applyMongooseHardening();
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true,
+    // Not buffered: if MongoDB is unreachable, the connection retries must be visible at boot.
+    bufferLogs: false,
     bodyParser: false, // re-registered in configureApp with a strict JSON-only limit
   });
   configureApp(app);

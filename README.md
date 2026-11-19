@@ -47,7 +47,7 @@ or identical access/refresh secrets) and prints exactly what is wrong.
 | `pnpm test:e2e`  | API integration + e2e against MongoDB (`MONGO_URI_TEST` or an in-memory server) |
 | `pnpm format`    | Prettier                                                                        |
 
-> e2e tests use `MONGO_URI_TEST` when set (e.g. `MONGO_URI_TEST=mongodb://localhost:27017` with
+> e2e tests use `MONGO_URI_TEST` when set (e.g. `MONGO_URI_TEST=mongodb://127.0.0.1:27017` with
 > docker compose running), otherwise they download and start `mongodb-memory-server`.
 
 ## Architecture
