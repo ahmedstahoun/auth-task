@@ -1,0 +1,40 @@
+{
+  "name": "@auth/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Validation schemas and API contract types shared by the API and the web app",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:cov": "vitest run --coverage"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^5.1.1",
+    "tsup": "^9.0.0",
+    "vitest": "^5.1.1"
+  }
+}
